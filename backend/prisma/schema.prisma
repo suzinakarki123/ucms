@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  name         String
+  email        String       @unique
+  password     String
+  role         Role
+  coursesTaught Course[]    @relation("LecturerCourses")
+  enrollments  Enrollment[]
+  announcements Announcement[] @relation("AnnouncementAuthor")
+  createdAt    DateTime     @default(now())
+}
+
+model Course {
+  id            Int            @id @default(autoincrement())
+  title         String
+  code          String         @unique
+  description   String
+  lecturerId    Int
+  lecturer      User           @relation("LecturerCourses", fields: [lecturerId], references: [id])
+  enrollments   Enrollment[]
+  announcements Announcement[]
+  materials     Material[]
+  createdAt     DateTime       @default(now())
+}
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  courseId  Int
+  user      User     @relation(fields: [userId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  authorId  Int
+  courseId  Int
+  author    User     @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Material {
+  id        Int      @id @default(autoincrement())
+  title     String
+  url       String
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+}

@@ -67,3 +67,10 @@ model Material {
   course    Course   @relation(fields: [courseId], references: [id])
   createdAt DateTime @default(now())
 }
+
+model Circular {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+}

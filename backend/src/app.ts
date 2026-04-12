@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes";
+import circularRoutes from "./routes/circularRoutes";
 import testRoutes from "./routes/testRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import courseRoutes from "./routes/courseRoutes";
@@ -27,6 +28,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/courses", courseRoutes);
+app.use("/api/circulars", circularRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/materials", materialRoutes);
 

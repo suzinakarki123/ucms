@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { User, Course, Announcement, Material } from "../types";
 import { getCourses, createCourse, enrollCourse } from "../api/courseApi";
+import { getAllUsers, getAllEnrollments } from "../api/adminApi";
 import {
   getAnnouncementsByCourse,
   createAnnouncement,
@@ -32,15 +33,49 @@ const Dashboard = ({ user, onLogout }: Props) => {
   const [materialTitle, setMaterialTitle] = useState("");
   const [materialUrl, setMaterialUrl] = useState("");
 
+  const [users, setUsers] = useState<
+    { id: number; name: string; email: string; role: string }[]
+  >([]);
+
+  const [enrollments, setEnrollments] = useState<
+    {
+      user: { id: number; name: string; email: string; role: string };
+      course: { id: number; title: string; code: string };
+    }[]
+  >([]);
+
   const token = localStorage.getItem("token") || "";
 
   useEffect(() => {
     loadCourses();
-  }, []);
+
+    if (user.role === "ADMIN") {
+      loadAdminData();
+    }
+  }, [user]);
 
   const loadCourses = async () => {
-    const data = await getCourses(token);
-    setCourses(data);
+    try {
+      const data = await getCourses(token);
+      setCourses(data);
+    } catch (error) {
+      console.error("Error loading courses:", error);
+    }
+  };
+
+  const loadAdminData = async () => {
+    try {
+      const userData = await getAllUsers(token);
+      const enrollmentData = await getAllEnrollments(token);
+
+      console.log("Users from API:", userData);
+      console.log("Enrollments from API:", enrollmentData);
+
+      setUsers(userData);
+      setEnrollments(enrollmentData);
+    } catch (error) {
+      console.error("Error loading admin data:", error);
+    }
   };
 
   const loadCourseDetails = async (courseId: number) => {
@@ -60,44 +95,60 @@ const Dashboard = ({ user, onLogout }: Props) => {
   };
 
   const handleCreateCourse = async () => {
-    await createCourse(token, { title, code, description });
-    setTitle("");
-    setCode("");
-    setDescription("");
-    loadCourses();
+    try {
+      await createCourse(token, { title, code, description });
+      setTitle("");
+      setCode("");
+      setDescription("");
+      loadCourses();
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
   };
 
   const handleEnroll = async (courseId: number) => {
-    await enrollCourse(token, courseId);
-    alert("Enrolled successfully");
+    try {
+      await enrollCourse(token, courseId);
+      alert("Enrolled successfully");
+    } catch (error) {
+      console.error("Error enrolling in course:", error);
+    }
   };
 
   const handleCreateAnnouncement = async () => {
     if (!selectedCourseId) return;
 
-    await createAnnouncement(token, {
-      title: announcementTitle,
-      content: announcementContent,
-      courseId: selectedCourseId,
-    });
+    try {
+      await createAnnouncement(token, {
+        title: announcementTitle,
+        content: announcementContent,
+        courseId: selectedCourseId,
+      });
 
-    setAnnouncementTitle("");
-    setAnnouncementContent("");
-    loadCourseDetails(selectedCourseId);
+      setAnnouncementTitle("");
+      setAnnouncementContent("");
+      loadCourseDetails(selectedCourseId);
+    } catch (error) {
+      console.error("Error creating announcement:", error);
+    }
   };
 
   const handleAddMaterial = async () => {
     if (!selectedCourseId) return;
 
-    await addMaterial(token, {
-      title: materialTitle,
-      url: materialUrl,
-      courseId: selectedCourseId,
-    });
+    try {
+      await addMaterial(token, {
+        title: materialTitle,
+        url: materialUrl,
+        courseId: selectedCourseId,
+      });
 
-    setMaterialTitle("");
-    setMaterialUrl("");
-    loadCourseDetails(selectedCourseId);
+      setMaterialTitle("");
+      setMaterialUrl("");
+      loadCourseDetails(selectedCourseId);
+    } catch (error) {
+      console.error("Error adding material:", error);
+    }
   };
 
   return (
@@ -188,6 +239,76 @@ const Dashboard = ({ user, onLogout }: Props) => {
           ))
         )}
       </div>
+
+      {user.role === "ADMIN" && (
+        <div style={{ marginTop: "30px" }}>
+          <div
+            style={{
+              border: "1px solid #ccc",
+              padding: "20px",
+              borderRadius: "8px",
+              marginBottom: "20px",
+            }}
+          >
+            <h2>All Users</h2>
+            <p>Total users loaded: {users.length}</p>
+
+            {users.length === 0 ? (
+              <p>No users found.</p>
+            ) : (
+              users.map((u) => (
+                <div
+                  key={u.id}
+                  style={{
+                    border: "1px solid #ddd",
+                    padding: "10px",
+                    marginBottom: "10px",
+                    borderRadius: "6px",
+                  }}
+                >
+                  <strong>{u.name}</strong>
+                  <p>{u.email}</p>
+                  <p>Role: {u.role}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div
+            style={{
+              border: "1px solid #ccc",
+              padding: "20px",
+              borderRadius: "8px",
+            }}
+          >
+            <h2>All Enrollments</h2>
+            <p>Total enrollments loaded: {enrollments.length}</p>
+
+            {enrollments.length === 0 ? (
+              <p>No enrollments found.</p>
+            ) : (
+              enrollments.map((enrollment, index) => (
+                <div
+                  key={index}
+                  style={{
+                    border: "1px solid #ddd",
+                    padding: "10px",
+                    marginBottom: "10px",
+                    borderRadius: "6px",
+                  }}
+                >
+                  <strong>{enrollment.user.name}</strong>
+                  <p>{enrollment.user.email}</p>
+                  <p>
+                    Enrolled in: {enrollment.course.title} (
+                    {enrollment.course.code})
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {selectedCourseId && (
         <div style={{ marginTop: "40px" }}>

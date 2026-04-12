@@ -90,3 +90,41 @@ export const getAnnouncementsByCourse = async (
     res.status(500).json({ error: "Failed to fetch announcements" });
   }
 };
+
+export const deleteAnnouncement = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const announcementId = Number(req.params.id);
+
+    if (!req.user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const announcement = await prisma.announcement.findUnique({
+      where: { id: announcementId },
+      include: { course: true },
+    });
+
+    if (!announcement) {
+      res.status(404).json({ error: "Announcement not found" });
+      return;
+    }
+
+    if (announcement.course.lecturerId !== req.user.id) {
+      res.status(403).json({ error: "You can only delete announcements from your own course" });
+      return;
+    }
+
+    await prisma.announcement.delete({
+      where: { id: announcementId },
+    });
+
+    res.status(200).json({ message: "Announcement deleted successfully" });
+  } catch (error) {
+    console.error("DELETE ANNOUNCEMENT ERROR:", error);
+    res.status(500).json({ error: "Failed to delete announcement" });
+  }
+};

@@ -156,3 +156,52 @@ export const enrollInCourse = async (
     res.status(500).json({ error: "Failed to enroll in course" });
   }
 };
+
+export const deleteCourse = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const courseId = Number(req.params.id);
+
+    if (!req.user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+    });
+
+    if (!course) {
+      res.status(404).json({ error: "Course not found" });
+      return;
+    }
+
+    if (course.lecturerId !== req.user.id) {
+      res.status(403).json({ error: "You can only delete your own course" });
+      return;
+    }
+
+    await prisma.enrollment.deleteMany({
+      where: { courseId },
+    });
+
+    await prisma.announcement.deleteMany({
+      where: { courseId },
+    });
+
+    await prisma.material.deleteMany({
+      where: { courseId },
+    });
+
+    await prisma.course.delete({
+      where: { id: courseId },
+    });
+
+    res.status(200).json({ message: "Course deleted successfully" });
+  } catch (error) {
+    console.error("DELETE COURSE ERROR:", error);
+    res.status(500).json({ error: "Failed to delete course" });
+  }
+};

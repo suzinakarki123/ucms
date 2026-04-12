@@ -80,3 +80,41 @@ export const getMaterialsByCourse = async (
     res.status(500).json({ error: "Failed to fetch materials" });
   }
 };
+
+export const deleteMaterial = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const materialId = Number(req.params.id);
+
+    if (!req.user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const material = await prisma.material.findUnique({
+      where: { id: materialId },
+      include: { course: true },
+    });
+
+    if (!material) {
+      res.status(404).json({ error: "Material not found" });
+      return;
+    }
+
+    if (material.course.lecturerId !== req.user.id) {
+      res.status(403).json({ error: "You can only delete materials from your own course" });
+      return;
+    }
+
+    await prisma.material.delete({
+      where: { id: materialId },
+    });
+
+    res.status(200).json({ message: "Material deleted successfully" });
+  } catch (error) {
+    console.error("DELETE MATERIAL ERROR:", error);
+    res.status(500).json({ error: "Failed to delete material" });
+  }
+};

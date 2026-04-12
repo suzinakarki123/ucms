@@ -48,3 +48,30 @@ export const getAllCirculars = async (
     res.status(500).json({ error: "Failed to fetch circulars" });
   }
 };
+
+export const deleteCircular = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const circularId = Number(req.params.id);
+
+    const circular = await prisma.circular.findUnique({
+      where: { id: circularId },
+    });
+
+    if (!circular) {
+      res.status(404).json({ error: "Circular not found" });
+      return;
+    }
+
+    await prisma.circular.delete({
+      where: { id: circularId },
+    });
+
+    res.status(200).json({ message: "Circular deleted successfully" });
+  } catch (error) {
+    console.error("DELETE CIRCULAR ERROR:", error);
+    res.status(500).json({ error: "Failed to delete circular" });
+  }
+};

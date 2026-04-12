@@ -2,6 +2,7 @@ import express from "express";
 import {
   addMaterial,
   getMaterialsByCourse,
+  deleteMaterial
 } from "../controllers/materialController";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { authorizeRoles } from "../middleware/roleMiddleware";
@@ -21,4 +22,11 @@ router.get(
   getMaterialsByCourse
 );
 
+
+router.delete(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("LECTURER"),
+  deleteMaterial
+);
 export default router;

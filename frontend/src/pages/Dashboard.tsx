@@ -6,34 +6,71 @@ import type {
   Material,
   Circular,
 } from "../types";
-import { getCourses, createCourse, enrollCourse } from "../api/courseApi";
-import { getAllUsers, getAllEnrollments } from "../api/adminApi";
+import {
+  getCourses,
+  createCourse,
+  enrollCourse,
+  deleteCourse,
+} from "../api/courseApi";
 import {
   getAnnouncementsByCourse,
   createAnnouncement,
+  deleteAnnouncement,
 } from "../api/announcementApi";
 import {
   getMaterialsByCourse,
   addMaterial,
+  deleteMaterial,
 } from "../api/materialApi";
-import { getCirculars, createCircular } from "../api/circularApi";
-
+import {
+  getCirculars,
+  createCircular,
+  deleteCircular,
+} from "../api/circularApi";
+import { getAllUsers, getAllEnrollments } from "../api/adminApi";
 
 interface Props {
   user: User;
   onLogout: () => void;
 }
 
+type AdminUser = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+};
+
+type AdminEnrollment = {
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+  course: {
+    id: number;
+    title: string;
+    code: string;
+  };
+};
+
 const Dashboard = ({ user, onLogout }: Props) => {
+  const token = localStorage.getItem("token") || "";
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [circulars, setCirculars] = useState<Circular[]>([]);
 
-  const [title, setTitle] = useState("");
-  const [code, setCode] = useState("");
-  const [description, setDescription] = useState("");
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [enrollments, setEnrollments] = useState<AdminEnrollment[]>([]);
+
+  const [courseTitle, setCourseTitle] = useState("");
+  const [courseCode, setCourseCode] = useState("");
+  const [courseDescription, setCourseDescription] = useState("");
 
   const [announcementTitle, setAnnouncementTitle] = useState("");
   const [announcementContent, setAnnouncementContent] = useState("");
@@ -41,31 +78,20 @@ const Dashboard = ({ user, onLogout }: Props) => {
   const [materialTitle, setMaterialTitle] = useState("");
   const [materialUrl, setMaterialUrl] = useState("");
 
-  const [circulars, setCirculars] = useState<Circular[]>([]);
-const [circularTitle, setCircularTitle] = useState("");
-const [circularContent, setCircularContent] = useState("");
-
-  const [users, setUsers] = useState<
-    { id: number; name: string; email: string; role: string }[]
-  >([]);
-
-  const [enrollments, setEnrollments] = useState<
-    {
-      user: { id: number; name: string; email: string; role: string };
-      course: { id: number; title: string; code: string };
-    }[]
-  >([]);
-
-  const token = localStorage.getItem("token") || "";
+  const [circularTitle, setCircularTitle] = useState("");
+  const [circularContent, setCircularContent] = useState("");
 
   useEffect(() => {
-    loadCourses();
-    loadCirculars();
-
-    if (user.role === "ADMIN") {
-      loadAdminData();
-    }
+    loadInitialData();
   }, [user]);
+
+  const loadInitialData = async () => {
+    await Promise.all([
+      loadCourses(),
+      loadCirculars(),
+      user.role === "ADMIN" ? loadAdminData() : Promise.resolve(),
+    ]);
+  };
 
   const loadCourses = async () => {
     try {
@@ -76,16 +102,24 @@ const [circularContent, setCircularContent] = useState("");
     }
   };
 
+  const loadCirculars = async () => {
+    try {
+      const data = await getCirculars(token);
+      setCirculars(data);
+    } catch (error) {
+      console.error("Error loading circulars:", error);
+    }
+  };
+
   const loadAdminData = async () => {
     try {
-      const userData = await getAllUsers(token);
-      const enrollmentData = await getAllEnrollments(token);
+      const [userData, enrollmentData] = await Promise.all([
+        getAllUsers(token),
+        getAllEnrollments(token),
+      ]);
 
-      console.log("Users from API:", userData);
-      console.log("Enrollments from API:", enrollmentData);
-
-      setUsers(userData);
-      setEnrollments(enrollmentData);
+      setUsers(Array.isArray(userData) ? userData : []);
+      setEnrollments(Array.isArray(enrollmentData) ? enrollmentData : []);
     } catch (error) {
       console.error("Error loading admin data:", error);
     }
@@ -95,11 +129,13 @@ const [circularContent, setCircularContent] = useState("");
     try {
       setSelectedCourseId(courseId);
 
-      const annData = await getAnnouncementsByCourse(token, courseId);
-      const matData = await getMaterialsByCourse(token, courseId);
+      const [announcementData, materialData] = await Promise.all([
+        getAnnouncementsByCourse(token, courseId),
+        getMaterialsByCourse(token, courseId),
+      ]);
 
-      setAnnouncements(Array.isArray(annData) ? annData : []);
-      setMaterials(Array.isArray(matData) ? matData : []);
+      setAnnouncements(Array.isArray(announcementData) ? announcementData : []);
+      setMaterials(Array.isArray(materialData) ? materialData : []);
     } catch (error) {
       console.error("Error loading course details:", error);
       setAnnouncements([]);
@@ -107,39 +143,38 @@ const [circularContent, setCircularContent] = useState("");
     }
   };
 
-  const loadCirculars = async () => {
-  try {
-    const data = await getCirculars(token);
-    setCirculars(data);
-  } catch (error) {
-    console.error("Error loading circulars:", error);
-  }
-};
-
-const handleCreateCircular = async () => {
-  try {
-    await createCircular(token, {
-      title: circularTitle,
-      content: circularContent,
-    });
-
-    setCircularTitle("");
-    setCircularContent("");
-    loadCirculars();
-  } catch (error) {
-    console.error("Error creating circular:", error);
-  }
-};
-
   const handleCreateCourse = async () => {
+    if (!courseTitle || !courseCode || !courseDescription) return;
+
     try {
-      await createCourse(token, { title, code, description });
-      setTitle("");
-      setCode("");
-      setDescription("");
-      loadCourses();
+      await createCourse(token, {
+        title: courseTitle,
+        code: courseCode,
+        description: courseDescription,
+      });
+
+      setCourseTitle("");
+      setCourseCode("");
+      setCourseDescription("");
+      await loadCourses();
     } catch (error) {
       console.error("Error creating course:", error);
+    }
+  };
+
+  const handleDeleteCourse = async (courseId: number) => {
+    try {
+      await deleteCourse(token, courseId);
+
+      if (selectedCourseId === courseId) {
+        setSelectedCourseId(null);
+        setAnnouncements([]);
+        setMaterials([]);
+      }
+
+      await loadCourses();
+    } catch (error) {
+      console.error("Error deleting course:", error);
     }
   };
 
@@ -153,7 +188,7 @@ const handleCreateCircular = async () => {
   };
 
   const handleCreateAnnouncement = async () => {
-    if (!selectedCourseId) return;
+    if (!selectedCourseId || !announcementTitle || !announcementContent) return;
 
     try {
       await createAnnouncement(token, {
@@ -164,14 +199,26 @@ const handleCreateCircular = async () => {
 
       setAnnouncementTitle("");
       setAnnouncementContent("");
-      loadCourseDetails(selectedCourseId);
+      await loadCourseDetails(selectedCourseId);
     } catch (error) {
       console.error("Error creating announcement:", error);
     }
   };
 
+  const handleDeleteAnnouncement = async (announcementId: number) => {
+    try {
+      await deleteAnnouncement(token, announcementId);
+
+      if (selectedCourseId) {
+        await loadCourseDetails(selectedCourseId);
+      }
+    } catch (error) {
+      console.error("Error deleting announcement:", error);
+    }
+  };
+
   const handleAddMaterial = async () => {
-    if (!selectedCourseId) return;
+    if (!selectedCourseId || !materialTitle || !materialUrl) return;
 
     try {
       await addMaterial(token, {
@@ -182,9 +229,47 @@ const handleCreateCircular = async () => {
 
       setMaterialTitle("");
       setMaterialUrl("");
-      loadCourseDetails(selectedCourseId);
+      await loadCourseDetails(selectedCourseId);
     } catch (error) {
       console.error("Error adding material:", error);
+    }
+  };
+
+  const handleDeleteMaterial = async (materialId: number) => {
+    try {
+      await deleteMaterial(token, materialId);
+
+      if (selectedCourseId) {
+        await loadCourseDetails(selectedCourseId);
+      }
+    } catch (error) {
+      console.error("Error deleting material:", error);
+    }
+  };
+
+  const handleCreateCircular = async () => {
+    if (!circularTitle || !circularContent) return;
+
+    try {
+      await createCircular(token, {
+        title: circularTitle,
+        content: circularContent,
+      });
+
+      setCircularTitle("");
+      setCircularContent("");
+      await loadCirculars();
+    } catch (error) {
+      console.error("Error creating circular:", error);
+    }
+  };
+
+  const handleDeleteCircular = async (circularId: number) => {
+    try {
+      await deleteCircular(token, circularId);
+      await loadCirculars();
+    } catch (error) {
+      console.error("Error deleting circular:", error);
     }
   };
 
@@ -208,53 +293,59 @@ const handleCreateCircular = async () => {
       </div>
 
       <div
-  style={{
-    border: "1px solid #ccc",
-    padding: "20px",
-    borderRadius: "8px",
-    marginBottom: "30px",
-  }}
->
-  <h2>University Circulars</h2>
-
-  {circulars.length === 0 ? (
-    <p>No circulars available.</p>
-  ) : (
-    circulars.map((circular) => (
-      <div
-        key={circular.id}
         style={{
-          border: "1px solid #ddd",
-          padding: "10px",
-          marginBottom: "10px",
-          borderRadius: "6px",
+          border: "1px solid #ccc",
+          padding: "20px",
+          borderRadius: "8px",
+          marginBottom: "30px",
         }}
       >
-        <strong>{circular.title}</strong>
-        <p>{circular.content}</p>
-      </div>
-    ))
-  )}
+        <h2>University Circulars</h2>
 
-  {user.role === "ADMIN" && (
-    <div style={{ marginTop: "20px" }}>
-      <h3>Create Circular</h3>
-      <input
-        placeholder="Circular Title"
-        value={circularTitle}
-        onChange={(e) => setCircularTitle(e.target.value)}
-        style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-      />
-      <input
-        placeholder="Circular Content"
-        value={circularContent}
-        onChange={(e) => setCircularContent(e.target.value)}
-        style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-      />
-      <button onClick={handleCreateCircular}>Post Circular</button>
-    </div>
-  )}
-</div>
+        {circulars.length === 0 ? (
+          <p>No circulars available.</p>
+        ) : (
+          circulars.map((circular) => (
+            <div
+              key={circular.id}
+              style={{
+                border: "1px solid #ddd",
+                padding: "10px",
+                marginBottom: "10px",
+                borderRadius: "6px",
+              }}
+            >
+              <strong>{circular.title}</strong>
+              <p>{circular.content}</p>
+
+              {user.role === "ADMIN" && (
+                <button onClick={() => handleDeleteCircular(circular.id)}>
+                  Delete Circular
+                </button>
+              )}
+            </div>
+          ))
+        )}
+
+        {user.role === "ADMIN" && (
+          <div style={{ marginTop: "20px" }}>
+            <h3>Create Circular</h3>
+            <input
+              placeholder="Circular Title"
+              value={circularTitle}
+              onChange={(e) => setCircularTitle(e.target.value)}
+              style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
+            />
+            <input
+              placeholder="Circular Content"
+              value={circularContent}
+              onChange={(e) => setCircularContent(e.target.value)}
+              style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
+            />
+            <button onClick={handleCreateCircular}>Post Circular</button>
+          </div>
+        )}
+      </div>
 
       {user.role === "LECTURER" && (
         <div
@@ -268,28 +359,29 @@ const handleCreateCircular = async () => {
           <h2>Create Course</h2>
           <input
             placeholder="Course Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={courseTitle}
+            onChange={(e) => setCourseTitle(e.target.value)}
             style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
           />
           <input
             placeholder="Course Code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
+            value={courseCode}
+            onChange={(e) => setCourseCode(e.target.value)}
             style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
           />
           <input
             placeholder="Course Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={courseDescription}
+            onChange={(e) => setCourseDescription(e.target.value)}
             style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
           />
           <button onClick={handleCreateCourse}>Create Course</button>
         </div>
       )}
 
-      <div>
+      <div style={{ marginBottom: "30px" }}>
         <h2>Courses</h2>
+
         {courses.length === 0 ? (
           <p>No courses available.</p>
         ) : (
@@ -313,6 +405,15 @@ const handleCreateCircular = async () => {
                 View Details
               </button>
 
+              {user.role === "LECTURER" && (
+                <button
+                  onClick={() => handleDeleteCourse(course.id)}
+                  style={{ marginLeft: "10px" }}
+                >
+                  Delete Course
+                </button>
+              )}
+
               {user.role === "STUDENT" && (
                 <button
                   onClick={() => handleEnroll(course.id)}
@@ -327,7 +428,7 @@ const handleCreateCircular = async () => {
       </div>
 
       {user.role === "ADMIN" && (
-        <div style={{ marginTop: "30px" }}>
+        <div style={{ marginBottom: "30px" }}>
           <div
             style={{
               border: "1px solid #ccc",
@@ -409,12 +510,13 @@ const handleCreateCircular = async () => {
             }}
           >
             <h3>Announcements</h3>
+
             {announcements.length === 0 ? (
               <p>No announcements found for this course.</p>
             ) : (
-              announcements.map((a) => (
+              announcements.map((announcement) => (
                 <div
-                  key={a.id}
+                  key={announcement.id}
                   style={{
                     border: "1px solid #ddd",
                     padding: "10px",
@@ -422,8 +524,18 @@ const handleCreateCircular = async () => {
                     borderRadius: "6px",
                   }}
                 >
-                  <strong>{a.title}</strong>
-                  <p>{a.content}</p>
+                  <strong>{announcement.title}</strong>
+                  <p>{announcement.content}</p>
+
+                  {user.role === "LECTURER" && (
+                    <button
+                      onClick={() =>
+                        handleDeleteAnnouncement(announcement.id)
+                      }
+                    >
+                      Delete Announcement
+                    </button>
+                  )}
                 </div>
               ))
             )}
@@ -458,12 +570,13 @@ const handleCreateCircular = async () => {
             }}
           >
             <h3>Materials</h3>
+
             {materials.length === 0 ? (
               <p>No materials found for this course.</p>
             ) : (
-              materials.map((m) => (
+              materials.map((material) => (
                 <div
-                  key={m.id}
+                  key={material.id}
                   style={{
                     border: "1px solid #ddd",
                     padding: "10px",
@@ -471,12 +584,18 @@ const handleCreateCircular = async () => {
                     borderRadius: "6px",
                   }}
                 >
-                  <strong>{m.title}</strong>
+                  <strong>{material.title}</strong>
                   <p>
-                    <a href={m.url} target="_blank" rel="noreferrer">
-                      {m.url}
+                    <a href={material.url} target="_blank" rel="noreferrer">
+                      {material.url}
                     </a>
                   </p>
+
+                  {user.role === "LECTURER" && (
+                    <button onClick={() => handleDeleteMaterial(material.id)}>
+                      Delete Material
+                    </button>
+                  )}
                 </div>
               ))
             )}

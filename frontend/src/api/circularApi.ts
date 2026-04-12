@@ -25,3 +25,13 @@ export const createCircular = async (
 
   return res.data;
 };
+
+export const deleteCircular = async (token: string, circularId: number) => {
+  const res = await axios.delete(`${API_URL}/${circularId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};

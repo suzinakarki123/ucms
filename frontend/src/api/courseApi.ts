@@ -43,3 +43,13 @@ export const enrollCourse = async (token: string, courseId: number) => {
 
   return res.data;
 };
+
+export const deleteCourse = async (token: string, courseId: number) => {
+  const res = await axios.delete(`${API_URL}/${courseId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};

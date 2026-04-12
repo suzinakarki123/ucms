@@ -31,3 +31,13 @@ export const addMaterial = async (
 
   return res.data;
 };
+
+export const deleteMaterial = async (token: string, materialId: number) => {
+  const res = await axios.delete(`${API_URL}/${materialId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};

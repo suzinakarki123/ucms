@@ -31,3 +31,16 @@ export const createAnnouncement = async (
 
   return res.data;
 };
+
+export const deleteAnnouncement = async (
+  token: string,
+  announcementId: number
+) => {
+  const res = await axios.delete(`${API_URL}/${announcementId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};

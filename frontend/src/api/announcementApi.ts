@@ -44,3 +44,21 @@ export const deleteAnnouncement = async (
 
   return res.data;
 };
+
+export const updateAnnouncement = async (
+  token: string,
+  announcementId: number,
+  data: {
+    title?: string;
+    content?: string;
+  }
+) => {
+  const res = await axios.put(`${API_URL}/${announcementId}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};
+

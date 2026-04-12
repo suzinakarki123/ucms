@@ -6,27 +6,36 @@ import type {
   Material,
   Circular,
 } from "../types";
+
 import {
   getCourses,
   createCourse,
   enrollCourse,
   deleteCourse,
+  updateCourse,
 } from "../api/courseApi";
+
 import {
   getAnnouncementsByCourse,
   createAnnouncement,
   deleteAnnouncement,
+  updateAnnouncement,
 } from "../api/announcementApi";
+
 import {
   getMaterialsByCourse,
   addMaterial,
   deleteMaterial,
+  updateMaterial,
 } from "../api/materialApi";
+
 import {
   getCirculars,
   createCircular,
   deleteCircular,
+  updateCircular,
 } from "../api/circularApi";
+
 import { getAllUsers, getAllEnrollments } from "../api/adminApi";
 
 interface Props {
@@ -86,28 +95,34 @@ const Dashboard = ({ user, onLogout }: Props) => {
   }, [user]);
 
   const loadInitialData = async () => {
-    await Promise.all([
-      loadCourses(),
-      loadCirculars(),
-      user.role === "ADMIN" ? loadAdminData() : Promise.resolve(),
-    ]);
+    try {
+      await Promise.all([
+        loadCourses(),
+        loadCirculars(),
+        user.role === "ADMIN" ? loadAdminData() : Promise.resolve(),
+      ]);
+    } catch (error) {
+      console.error("Error loading initial dashboard data:", error);
+    }
   };
 
   const loadCourses = async () => {
     try {
       const data = await getCourses(token);
-      setCourses(data);
+      setCourses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading courses:", error);
+      setCourses([]);
     }
   };
 
   const loadCirculars = async () => {
     try {
       const data = await getCirculars(token);
-      setCirculars(data);
+      setCirculars(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading circulars:", error);
+      setCirculars([]);
     }
   };
 
@@ -122,6 +137,8 @@ const Dashboard = ({ user, onLogout }: Props) => {
       setEnrollments(Array.isArray(enrollmentData) ? enrollmentData : []);
     } catch (error) {
       console.error("Error loading admin data:", error);
+      setUsers([]);
+      setEnrollments([]);
     }
   };
 
@@ -159,6 +176,36 @@ const Dashboard = ({ user, onLogout }: Props) => {
       await loadCourses();
     } catch (error) {
       console.error("Error creating course:", error);
+    }
+  };
+
+  const handleEditCourse = async (course: Course) => {
+    const newTitle = prompt("Enter new course title:", course.title);
+    if (newTitle === null) return;
+
+    const newCode = prompt("Enter new course code:", course.code);
+    if (newCode === null) return;
+
+    const newDescription = prompt(
+      "Enter new course description:",
+      course.description
+    );
+    if (newDescription === null) return;
+
+    try {
+      await updateCourse(token, course.id, {
+        title: newTitle,
+        code: newCode,
+        description: newDescription,
+      });
+
+      await loadCourses();
+
+      if (selectedCourseId === course.id) {
+        await loadCourseDetails(course.id);
+      }
+    } catch (error) {
+      console.error("Error updating course:", error);
     }
   };
 
@@ -205,6 +252,30 @@ const Dashboard = ({ user, onLogout }: Props) => {
     }
   };
 
+  const handleEditAnnouncement = async (announcement: Announcement) => {
+    const newTitle = prompt("Enter new announcement title:", announcement.title);
+    if (newTitle === null) return;
+
+    const newContent = prompt(
+      "Enter new announcement content:",
+      announcement.content
+    );
+    if (newContent === null) return;
+
+    try {
+      await updateAnnouncement(token, announcement.id, {
+        title: newTitle,
+        content: newContent,
+      });
+
+      if (selectedCourseId) {
+        await loadCourseDetails(selectedCourseId);
+      }
+    } catch (error) {
+      console.error("Error updating announcement:", error);
+    }
+  };
+
   const handleDeleteAnnouncement = async (announcementId: number) => {
     try {
       await deleteAnnouncement(token, announcementId);
@@ -235,6 +306,27 @@ const Dashboard = ({ user, onLogout }: Props) => {
     }
   };
 
+  const handleEditMaterial = async (material: Material) => {
+    const newTitle = prompt("Enter new material title:", material.title);
+    if (newTitle === null) return;
+
+    const newUrl = prompt("Enter new material URL:", material.url);
+    if (newUrl === null) return;
+
+    try {
+      await updateMaterial(token, material.id, {
+        title: newTitle,
+        url: newUrl,
+      });
+
+      if (selectedCourseId) {
+        await loadCourseDetails(selectedCourseId);
+      }
+    } catch (error) {
+      console.error("Error updating material:", error);
+    }
+  };
+
   const handleDeleteMaterial = async (materialId: number) => {
     try {
       await deleteMaterial(token, materialId);
@@ -261,6 +353,25 @@ const Dashboard = ({ user, onLogout }: Props) => {
       await loadCirculars();
     } catch (error) {
       console.error("Error creating circular:", error);
+    }
+  };
+
+  const handleEditCircular = async (circular: Circular) => {
+    const newTitle = prompt("Enter new circular title:", circular.title);
+    if (newTitle === null) return;
+
+    const newContent = prompt("Enter new circular content:", circular.content);
+    if (newContent === null) return;
+
+    try {
+      await updateCircular(token, circular.id, {
+        title: newTitle,
+        content: newContent,
+      });
+
+      await loadCirculars();
+    } catch (error) {
+      console.error("Error updating circular:", error);
     }
   };
 
@@ -319,9 +430,17 @@ const Dashboard = ({ user, onLogout }: Props) => {
               <p>{circular.content}</p>
 
               {user.role === "ADMIN" && (
-                <button onClick={() => handleDeleteCircular(circular.id)}>
-                  Delete Circular
-                </button>
+                <div style={{ marginTop: "10px" }}>
+                  <button onClick={() => handleEditCircular(circular)}>
+                    Edit Circular
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCircular(circular.id)}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Delete Circular
+                  </button>
+                </div>
               )}
             </div>
           ))
@@ -406,12 +525,20 @@ const Dashboard = ({ user, onLogout }: Props) => {
               </button>
 
               {user.role === "LECTURER" && (
-                <button
-                  onClick={() => handleDeleteCourse(course.id)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Delete Course
-                </button>
+                <>
+                  <button
+                    onClick={() => handleEditCourse(course)}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Edit Course
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCourse(course.id)}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Delete Course
+                  </button>
+                </>
               )}
 
               {user.role === "STUDENT" && (
@@ -528,13 +655,21 @@ const Dashboard = ({ user, onLogout }: Props) => {
                   <p>{announcement.content}</p>
 
                   {user.role === "LECTURER" && (
-                    <button
-                      onClick={() =>
-                        handleDeleteAnnouncement(announcement.id)
-                      }
-                    >
-                      Delete Announcement
-                    </button>
+                    <div style={{ marginTop: "10px" }}>
+                      <button
+                        onClick={() => handleEditAnnouncement(announcement)}
+                      >
+                        Edit Announcement
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDeleteAnnouncement(announcement.id)
+                        }
+                        style={{ marginLeft: "10px" }}
+                      >
+                        Delete Announcement
+                      </button>
+                    </div>
                   )}
                 </div>
               ))
@@ -592,9 +727,17 @@ const Dashboard = ({ user, onLogout }: Props) => {
                   </p>
 
                   {user.role === "LECTURER" && (
-                    <button onClick={() => handleDeleteMaterial(material.id)}>
-                      Delete Material
-                    </button>
+                    <div style={{ marginTop: "10px" }}>
+                      <button onClick={() => handleEditMaterial(material)}>
+                        Edit Material
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMaterial(material.id)}
+                        style={{ marginLeft: "10px" }}
+                      >
+                        Delete Material
+                      </button>
+                    </div>
                   )}
                 </div>
               ))

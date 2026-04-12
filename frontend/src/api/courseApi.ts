@@ -53,3 +53,21 @@ export const deleteCourse = async (token: string, courseId: number) => {
 
   return res.data;
 };
+
+export const updateCourse = async (
+  token: string,
+  courseId: number,
+  data: {
+    title?: string;
+    code?: string;
+    description?: string;
+  }
+) => {
+  const res = await axios.put(`${API_URL}/${courseId}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};

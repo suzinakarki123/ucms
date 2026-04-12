@@ -41,3 +41,19 @@ export const deleteMaterial = async (token: string, materialId: number) => {
 
   return res.data;
 };
+export const updateMaterial = async (
+  token: string,
+  materialId: number,
+  data: {
+    title?: string;
+    url?: string;
+  }
+) => {
+  const res = await axios.put(`${API_URL}/${materialId}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};

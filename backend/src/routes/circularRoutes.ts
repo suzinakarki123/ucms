@@ -2,7 +2,8 @@ import express from "express";
 import {
   createCircular,
   getAllCirculars,
-  deleteCircular
+  deleteCircular,
+  updateCircular
 } from "../controllers/circularController";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { authorizeRoles } from "../middleware/roleMiddleware";
@@ -23,6 +24,13 @@ router.delete(
   authenticateToken,
   authorizeRoles("ADMIN"),
   deleteCircular
+);
+
+router.put(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("ADMIN"),
+  updateCircular
 );
 
 export default router;

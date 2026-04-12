@@ -2,7 +2,8 @@ import express from "express";
 import {
   createAnnouncement,
   getAnnouncementsByCourse,
-  deleteAnnouncement
+  deleteAnnouncement,
+  updateAnnouncement
 } from "../controllers/announcementController";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { authorizeRoles } from "../middleware/roleMiddleware";
@@ -27,6 +28,13 @@ router.delete(
   authenticateToken,
   authorizeRoles("LECTURER"),
   deleteAnnouncement
+);
+
+router.put(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("LECTURER"),
+  updateAnnouncement
 );
 
 export default router;

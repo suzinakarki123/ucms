@@ -205,3 +205,49 @@ export const deleteCourse = async (
     res.status(500).json({ error: "Failed to delete course" });
   }
 };
+
+export const updateCourse = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const courseId = Number(req.params.id);
+    const { title, code, description } = req.body;
+
+    if (!req.user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+    });
+
+    if (!course) {
+      res.status(404).json({ error: "Course not found" });
+      return;
+    }
+
+    if (course.lecturerId !== req.user.id) {
+      res.status(403).json({ error: "You can only edit your own course" });
+      return;
+    }
+
+    const updatedCourse = await prisma.course.update({
+      where: { id: courseId },
+      data: {
+        title: title ?? course.title,
+        code: code ?? course.code,
+        description: description ?? course.description,
+      },
+    });
+
+    res.status(200).json({
+      message: "Course updated successfully",
+      course: updatedCourse,
+    });
+  } catch (error) {
+    console.error("UPDATE COURSE ERROR:", error);
+    res.status(500).json({ error: "Failed to update course" });
+  }
+};

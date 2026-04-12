@@ -4,7 +4,8 @@ import {
   getAllCourses,
   getMyCourses,
   enrollInCourse,
-  deleteCourse
+  deleteCourse,
+  updateCourse
 } from "../controllers/courseController";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { authorizeRoles } from "../middleware/roleMiddleware";
@@ -39,6 +40,13 @@ router.delete(
   authenticateToken,
   authorizeRoles("LECTURER"),
   deleteCourse
+);
+
+router.put(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("LECTURER"),
+  updateCourse
 );
 
 export default router;

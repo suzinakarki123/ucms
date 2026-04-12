@@ -118,3 +118,49 @@ export const deleteMaterial = async (
     res.status(500).json({ error: "Failed to delete material" });
   }
 };
+
+export const updateMaterial = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const materialId = Number(req.params.id);
+    const { title, url } = req.body;
+
+    if (!req.user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const material = await prisma.material.findUnique({
+      where: { id: materialId },
+      include: { course: true },
+    });
+
+    if (!material) {
+      res.status(404).json({ error: "Material not found" });
+      return;
+    }
+
+    if (material.course.lecturerId !== req.user.id) {
+      res.status(403).json({ error: "You can only edit materials from your own course" });
+      return;
+    }
+
+    const updatedMaterial = await prisma.material.update({
+      where: { id: materialId },
+      data: {
+        title: title ?? material.title,
+        url: url ?? material.url,
+      },
+    });
+
+    res.status(200).json({
+      message: "Material updated successfully",
+      material: updatedMaterial,
+    });
+  } catch (error) {
+    console.error("UPDATE MATERIAL ERROR:", error);
+    res.status(500).json({ error: "Failed to update material" });
+  }
+};

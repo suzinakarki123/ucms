@@ -75,3 +75,38 @@ export const deleteCircular = async (
     res.status(500).json({ error: "Failed to delete circular" });
   }
 };
+
+export const updateCircular = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const circularId = Number(req.params.id);
+    const { title, content } = req.body;
+
+    const circular = await prisma.circular.findUnique({
+      where: { id: circularId },
+    });
+
+    if (!circular) {
+      res.status(404).json({ error: "Circular not found" });
+      return;
+    }
+
+    const updatedCircular = await prisma.circular.update({
+      where: { id: circularId },
+      data: {
+        title: title ?? circular.title,
+        content: content ?? circular.content,
+      },
+    });
+
+    res.status(200).json({
+      message: "Circular updated successfully",
+      circular: updatedCircular,
+    });
+  } catch (error) {
+    console.error("UPDATE CIRCULAR ERROR:", error);
+    res.status(500).json({ error: "Failed to update circular" });
+  }
+};

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes";
 import testRoutes from "./routes/testRoutes";
+import adminRoutes from "./routes/adminRoutes";
 import courseRoutes from "./routes/courseRoutes";
 import announcementRoutes from "./routes/announcementRoutes";
 import materialRoutes from "./routes/materialRoutes";
@@ -23,6 +24,7 @@ app.get("/", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/announcements", announcementRoutes);

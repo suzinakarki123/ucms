@@ -36,3 +36,10 @@ export interface Material {
   courseId: number;
   createdAt?: string;
 }
+
+export interface Circular {
+  id: number;
+  title: string;
+  content: string;
+  createdAt?: string;
+}

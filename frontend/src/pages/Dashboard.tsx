@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import type { User, Course, Announcement, Material } from "../types";
+import type {
+  User,
+  Course,
+  Announcement,
+  Material,
+  Circular,
+} from "../types";
 import { getCourses, createCourse, enrollCourse } from "../api/courseApi";
 import { getAllUsers, getAllEnrollments } from "../api/adminApi";
 import {
@@ -10,6 +16,8 @@ import {
   getMaterialsByCourse,
   addMaterial,
 } from "../api/materialApi";
+import { getCirculars, createCircular } from "../api/circularApi";
+
 
 interface Props {
   user: User;
@@ -33,6 +41,10 @@ const Dashboard = ({ user, onLogout }: Props) => {
   const [materialTitle, setMaterialTitle] = useState("");
   const [materialUrl, setMaterialUrl] = useState("");
 
+  const [circulars, setCirculars] = useState<Circular[]>([]);
+const [circularTitle, setCircularTitle] = useState("");
+const [circularContent, setCircularContent] = useState("");
+
   const [users, setUsers] = useState<
     { id: number; name: string; email: string; role: string }[]
   >([]);
@@ -48,6 +60,7 @@ const Dashboard = ({ user, onLogout }: Props) => {
 
   useEffect(() => {
     loadCourses();
+    loadCirculars();
 
     if (user.role === "ADMIN") {
       loadAdminData();
@@ -93,6 +106,30 @@ const Dashboard = ({ user, onLogout }: Props) => {
       setMaterials([]);
     }
   };
+
+  const loadCirculars = async () => {
+  try {
+    const data = await getCirculars(token);
+    setCirculars(data);
+  } catch (error) {
+    console.error("Error loading circulars:", error);
+  }
+};
+
+const handleCreateCircular = async () => {
+  try {
+    await createCircular(token, {
+      title: circularTitle,
+      content: circularContent,
+    });
+
+    setCircularTitle("");
+    setCircularContent("");
+    loadCirculars();
+  } catch (error) {
+    console.error("Error creating circular:", error);
+  }
+};
 
   const handleCreateCourse = async () => {
     try {
@@ -169,6 +206,55 @@ const Dashboard = ({ user, onLogout }: Props) => {
         </div>
         <button onClick={onLogout}>Logout</button>
       </div>
+
+      <div
+  style={{
+    border: "1px solid #ccc",
+    padding: "20px",
+    borderRadius: "8px",
+    marginBottom: "30px",
+  }}
+>
+  <h2>University Circulars</h2>
+
+  {circulars.length === 0 ? (
+    <p>No circulars available.</p>
+  ) : (
+    circulars.map((circular) => (
+      <div
+        key={circular.id}
+        style={{
+          border: "1px solid #ddd",
+          padding: "10px",
+          marginBottom: "10px",
+          borderRadius: "6px",
+        }}
+      >
+        <strong>{circular.title}</strong>
+        <p>{circular.content}</p>
+      </div>
+    ))
+  )}
+
+  {user.role === "ADMIN" && (
+    <div style={{ marginTop: "20px" }}>
+      <h3>Create Circular</h3>
+      <input
+        placeholder="Circular Title"
+        value={circularTitle}
+        onChange={(e) => setCircularTitle(e.target.value)}
+        style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
+      />
+      <input
+        placeholder="Circular Content"
+        value={circularContent}
+        onChange={(e) => setCircularContent(e.target.value)}
+        style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
+      />
+      <button onClick={handleCreateCircular}>Post Circular</button>
+    </div>
+  )}
+</div>
 
       {user.role === "LECTURER" && (
         <div

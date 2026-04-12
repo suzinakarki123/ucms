@@ -19,3 +19,20 @@ export interface Course {
   lecturerId: number;
   createdAt: string;
 }
+
+export interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  courseId: number;
+  authorId: number;
+  createdAt?: string;
+}
+
+export interface Material {
+  id: number;
+  title: string;
+  url: string;
+  courseId: number;
+  createdAt?: string;
+}

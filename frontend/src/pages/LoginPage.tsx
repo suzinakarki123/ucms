@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { loginUser } from "../api/authApi";
 import type { User } from "../types";
+import "../styles/login.css";
 
 interface LoginPageProps {
   onLogin: (token: string, user: User) => void;
@@ -25,36 +26,39 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "50px auto" }}>
-      <h2>UCMS Login</h2>
+    <div className="login-page">
+      <div className="login-card">
+        <h1 className="login-title">UCMS</h1>
+        <p className="login-subtitle">University Course Management System</p>
 
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Email</label>
-          <br />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-          />
-        </div>
+        <form onSubmit={handleLogin}>
+          <div className="login-form-group">
+            <label className="login-label">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+            />
+          </div>
 
-        <div>
-          <label>Password</label>
-          <br />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-          />
-        </div>
+          <div className="login-form-group">
+            <label className="login-label">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+            />
+          </div>
 
-        <button type="submit">Login</button>
-      </form>
+          <button type="submit" style={{ width: "100%" }}>
+            Login
+          </button>
+        </form>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <p className="login-error">{error}</p>}
+      </div>
     </div>
   );
 };

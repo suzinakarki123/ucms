@@ -37,6 +37,7 @@ import {
 } from "../api/circularApi";
 
 import { getAllUsers, getAllEnrollments } from "../api/adminApi";
+import "../styles/dashboard.css";
 
 interface Props {
   user: User;
@@ -95,15 +96,11 @@ const Dashboard = ({ user, onLogout }: Props) => {
   }, [user]);
 
   const loadInitialData = async () => {
-    try {
-      await Promise.all([
-        loadCourses(),
-        loadCirculars(),
-        user.role === "ADMIN" ? loadAdminData() : Promise.resolve(),
-      ]);
-    } catch (error) {
-      console.error("Error loading initial dashboard data:", error);
-    }
+    await Promise.all([
+      loadCourses(),
+      loadCirculars(),
+      user.role === "ADMIN" ? loadAdminData() : Promise.resolve(),
+    ]);
   };
 
   const loadCourses = async () => {
@@ -163,20 +160,16 @@ const Dashboard = ({ user, onLogout }: Props) => {
   const handleCreateCourse = async () => {
     if (!courseTitle || !courseCode || !courseDescription) return;
 
-    try {
-      await createCourse(token, {
-        title: courseTitle,
-        code: courseCode,
-        description: courseDescription,
-      });
+    await createCourse(token, {
+      title: courseTitle,
+      code: courseCode,
+      description: courseDescription,
+    });
 
-      setCourseTitle("");
-      setCourseCode("");
-      setCourseDescription("");
-      await loadCourses();
-    } catch (error) {
-      console.error("Error creating course:", error);
-    }
+    setCourseTitle("");
+    setCourseCode("");
+    setCourseDescription("");
+    await loadCourses();
   };
 
   const handleEditCourse = async (course: Course) => {
@@ -192,64 +185,48 @@ const Dashboard = ({ user, onLogout }: Props) => {
     );
     if (newDescription === null) return;
 
-    try {
-      await updateCourse(token, course.id, {
-        title: newTitle,
-        code: newCode,
-        description: newDescription,
-      });
+    await updateCourse(token, course.id, {
+      title: newTitle,
+      code: newCode,
+      description: newDescription,
+    });
 
-      await loadCourses();
+    await loadCourses();
 
-      if (selectedCourseId === course.id) {
-        await loadCourseDetails(course.id);
-      }
-    } catch (error) {
-      console.error("Error updating course:", error);
+    if (selectedCourseId === course.id) {
+      await loadCourseDetails(course.id);
     }
   };
 
   const handleDeleteCourse = async (courseId: number) => {
-    try {
-      await deleteCourse(token, courseId);
+    await deleteCourse(token, courseId);
 
-      if (selectedCourseId === courseId) {
-        setSelectedCourseId(null);
-        setAnnouncements([]);
-        setMaterials([]);
-      }
-
-      await loadCourses();
-    } catch (error) {
-      console.error("Error deleting course:", error);
+    if (selectedCourseId === courseId) {
+      setSelectedCourseId(null);
+      setAnnouncements([]);
+      setMaterials([]);
     }
+
+    await loadCourses();
   };
 
   const handleEnroll = async (courseId: number) => {
-    try {
-      await enrollCourse(token, courseId);
-      alert("Enrolled successfully");
-    } catch (error) {
-      console.error("Error enrolling in course:", error);
-    }
+    await enrollCourse(token, courseId);
+    alert("Enrolled successfully");
   };
 
   const handleCreateAnnouncement = async () => {
     if (!selectedCourseId || !announcementTitle || !announcementContent) return;
 
-    try {
-      await createAnnouncement(token, {
-        title: announcementTitle,
-        content: announcementContent,
-        courseId: selectedCourseId,
-      });
+    await createAnnouncement(token, {
+      title: announcementTitle,
+      content: announcementContent,
+      courseId: selectedCourseId,
+    });
 
-      setAnnouncementTitle("");
-      setAnnouncementContent("");
-      await loadCourseDetails(selectedCourseId);
-    } catch (error) {
-      console.error("Error creating announcement:", error);
-    }
+    setAnnouncementTitle("");
+    setAnnouncementContent("");
+    await loadCourseDetails(selectedCourseId);
   };
 
   const handleEditAnnouncement = async (announcement: Announcement) => {
@@ -262,48 +239,36 @@ const Dashboard = ({ user, onLogout }: Props) => {
     );
     if (newContent === null) return;
 
-    try {
-      await updateAnnouncement(token, announcement.id, {
-        title: newTitle,
-        content: newContent,
-      });
+    await updateAnnouncement(token, announcement.id, {
+      title: newTitle,
+      content: newContent,
+    });
 
-      if (selectedCourseId) {
-        await loadCourseDetails(selectedCourseId);
-      }
-    } catch (error) {
-      console.error("Error updating announcement:", error);
+    if (selectedCourseId) {
+      await loadCourseDetails(selectedCourseId);
     }
   };
 
   const handleDeleteAnnouncement = async (announcementId: number) => {
-    try {
-      await deleteAnnouncement(token, announcementId);
+    await deleteAnnouncement(token, announcementId);
 
-      if (selectedCourseId) {
-        await loadCourseDetails(selectedCourseId);
-      }
-    } catch (error) {
-      console.error("Error deleting announcement:", error);
+    if (selectedCourseId) {
+      await loadCourseDetails(selectedCourseId);
     }
   };
 
   const handleAddMaterial = async () => {
     if (!selectedCourseId || !materialTitle || !materialUrl) return;
 
-    try {
-      await addMaterial(token, {
-        title: materialTitle,
-        url: materialUrl,
-        courseId: selectedCourseId,
-      });
+    await addMaterial(token, {
+      title: materialTitle,
+      url: materialUrl,
+      courseId: selectedCourseId,
+    });
 
-      setMaterialTitle("");
-      setMaterialUrl("");
-      await loadCourseDetails(selectedCourseId);
-    } catch (error) {
-      console.error("Error adding material:", error);
-    }
+    setMaterialTitle("");
+    setMaterialUrl("");
+    await loadCourseDetails(selectedCourseId);
   };
 
   const handleEditMaterial = async (material: Material) => {
@@ -313,47 +278,35 @@ const Dashboard = ({ user, onLogout }: Props) => {
     const newUrl = prompt("Enter new material URL:", material.url);
     if (newUrl === null) return;
 
-    try {
-      await updateMaterial(token, material.id, {
-        title: newTitle,
-        url: newUrl,
-      });
+    await updateMaterial(token, material.id, {
+      title: newTitle,
+      url: newUrl,
+    });
 
-      if (selectedCourseId) {
-        await loadCourseDetails(selectedCourseId);
-      }
-    } catch (error) {
-      console.error("Error updating material:", error);
+    if (selectedCourseId) {
+      await loadCourseDetails(selectedCourseId);
     }
   };
 
   const handleDeleteMaterial = async (materialId: number) => {
-    try {
-      await deleteMaterial(token, materialId);
+    await deleteMaterial(token, materialId);
 
-      if (selectedCourseId) {
-        await loadCourseDetails(selectedCourseId);
-      }
-    } catch (error) {
-      console.error("Error deleting material:", error);
+    if (selectedCourseId) {
+      await loadCourseDetails(selectedCourseId);
     }
   };
 
   const handleCreateCircular = async () => {
     if (!circularTitle || !circularContent) return;
 
-    try {
-      await createCircular(token, {
-        title: circularTitle,
-        content: circularContent,
-      });
+    await createCircular(token, {
+      title: circularTitle,
+      content: circularContent,
+    });
 
-      setCircularTitle("");
-      setCircularContent("");
-      await loadCirculars();
-    } catch (error) {
-      console.error("Error creating circular:", error);
-    }
+    setCircularTitle("");
+    setCircularContent("");
+    await loadCirculars();
   };
 
   const handleEditCircular = async (circular: Circular) => {
@@ -363,82 +316,55 @@ const Dashboard = ({ user, onLogout }: Props) => {
     const newContent = prompt("Enter new circular content:", circular.content);
     if (newContent === null) return;
 
-    try {
-      await updateCircular(token, circular.id, {
-        title: newTitle,
-        content: newContent,
-      });
+    await updateCircular(token, circular.id, {
+      title: newTitle,
+      content: newContent,
+    });
 
-      await loadCirculars();
-    } catch (error) {
-      console.error("Error updating circular:", error);
-    }
+    await loadCirculars();
   };
 
   const handleDeleteCircular = async (circularId: number) => {
-    try {
-      await deleteCircular(token, circularId);
-      await loadCirculars();
-    } catch (error) {
-      console.error("Error deleting circular:", error);
-    }
+    await deleteCircular(token, circularId);
+    await loadCirculars();
   };
 
   return (
-    <div style={{ padding: "30px", maxWidth: "1000px", margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "30px",
-        }}
-      >
+    <div className="dashboard-container">
+      <header className="dashboard-header">
         <div>
-          <h1>UCMS Dashboard</h1>
-          <p>
-            Welcome <strong>{user.name}</strong> ({user.role})
+          <h1 className="dashboard-title">UCMS Dashboard</h1>
+          <p className="dashboard-subtitle">
+            Welcome <strong>{user.name}</strong> · {user.role}
           </p>
         </div>
-        <button onClick={onLogout}>Logout</button>
-      </div>
 
-      <div
-        style={{
-          border: "1px solid #ccc",
-          padding: "20px",
-          borderRadius: "8px",
-          marginBottom: "30px",
-        }}
-      >
-        <h2>University Circulars</h2>
+        <button className="danger-button" onClick={onLogout}>
+          Logout
+        </button>
+      </header>
+
+      <section className="section-card">
+        <h2 className="section-title">University Circulars</h2>
 
         {circulars.length === 0 ? (
-          <p>No circulars available.</p>
+          <p className="empty-text">No circulars available.</p>
         ) : (
           circulars.map((circular) => (
-            <div
-              key={circular.id}
-              style={{
-                border: "1px solid #ddd",
-                padding: "10px",
-                marginBottom: "10px",
-                borderRadius: "6px",
-              }}
-            >
-              <strong>{circular.title}</strong>
-              <p>{circular.content}</p>
+            <div className="item-card" key={circular.id}>
+              <h3 className="item-title">{circular.title}</h3>
+              <p className="item-text">{circular.content}</p>
 
               {user.role === "ADMIN" && (
-                <div style={{ marginTop: "10px" }}>
+                <div className="action-row">
                   <button onClick={() => handleEditCircular(circular)}>
-                    Edit Circular
+                    Edit
                   </button>
                   <button
+                    className="danger-button"
                     onClick={() => handleDeleteCircular(circular.id)}
-                    style={{ marginLeft: "10px" }}
                   >
-                    Delete Circular
+                    Delete
                   </button>
                 </div>
               )}
@@ -447,322 +373,274 @@ const Dashboard = ({ user, onLogout }: Props) => {
         )}
 
         {user.role === "ADMIN" && (
-          <div style={{ marginTop: "20px" }}>
+          <div className="form-panel">
             <h3>Create Circular</h3>
-            <input
-              placeholder="Circular Title"
-              value={circularTitle}
-              onChange={(e) => setCircularTitle(e.target.value)}
-              style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-            />
-            <input
-              placeholder="Circular Content"
-              value={circularContent}
-              onChange={(e) => setCircularContent(e.target.value)}
-              style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-            />
+
+            <div className="form-group">
+              <input
+                placeholder="Circular title"
+                value={circularTitle}
+                onChange={(e) => setCircularTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <input
+                placeholder="Circular content"
+                value={circularContent}
+                onChange={(e) => setCircularContent(e.target.value)}
+              />
+            </div>
+
             <button onClick={handleCreateCircular}>Post Circular</button>
           </div>
         )}
-      </div>
+      </section>
 
       {user.role === "LECTURER" && (
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "20px",
-            borderRadius: "8px",
-            marginBottom: "30px",
-          }}
-        >
-          <h2>Create Course</h2>
-          <input
-            placeholder="Course Title"
-            value={courseTitle}
-            onChange={(e) => setCourseTitle(e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-          />
-          <input
-            placeholder="Course Code"
-            value={courseCode}
-            onChange={(e) => setCourseCode(e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-          />
-          <input
-            placeholder="Course Description"
-            value={courseDescription}
-            onChange={(e) => setCourseDescription(e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-          />
+        <section className="section-card">
+          <h2 className="section-title">Create Course</h2>
+
+          <div className="form-group">
+            <input
+              placeholder="Course title"
+              value={courseTitle}
+              onChange={(e) => setCourseTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <input
+              placeholder="Course code"
+              value={courseCode}
+              onChange={(e) => setCourseCode(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <input
+              placeholder="Course description"
+              value={courseDescription}
+              onChange={(e) => setCourseDescription(e.target.value)}
+            />
+          </div>
+
           <button onClick={handleCreateCourse}>Create Course</button>
-        </div>
+        </section>
       )}
 
-      <div style={{ marginBottom: "30px" }}>
-        <h2>Courses</h2>
+      <section className="section-card">
+        <h2 className="section-title">Courses</h2>
 
         {courses.length === 0 ? (
-          <p>No courses available.</p>
+          <p className="empty-text">No courses available.</p>
         ) : (
           courses.map((course) => (
-            <div
-              key={course.id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "15px",
-                borderRadius: "8px",
-                marginBottom: "15px",
-              }}
-            >
-              <h3>{course.title}</h3>
-              <p>{course.description}</p>
-              <p>
+            <div className="item-card" key={course.id}>
+              <h3 className="item-title">{course.title}</h3>
+              <p className="item-text">{course.description}</p>
+              <p className="item-meta">
                 <strong>Code:</strong> {course.code}
               </p>
 
-              <button onClick={() => loadCourseDetails(course.id)}>
-                View Details
-              </button>
-
-              {user.role === "LECTURER" && (
-                <>
-                  <button
-                    onClick={() => handleEditCourse(course)}
-                    style={{ marginLeft: "10px" }}
-                  >
-                    Edit Course
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCourse(course.id)}
-                    style={{ marginLeft: "10px" }}
-                  >
-                    Delete Course
-                  </button>
-                </>
-              )}
-
-              {user.role === "STUDENT" && (
-                <button
-                  onClick={() => handleEnroll(course.id)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Enroll
+              <div className="action-row">
+                <button onClick={() => loadCourseDetails(course.id)}>
+                  View Details
                 </button>
-              )}
+
+                {user.role === "LECTURER" && (
+                  <>
+                    <button onClick={() => handleEditCourse(course)}>
+                      Edit
+                    </button>
+                    <button
+                      className="danger-button"
+                      onClick={() => handleDeleteCourse(course.id)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+
+                {user.role === "STUDENT" && (
+                  <button onClick={() => handleEnroll(course.id)}>
+                    Enroll
+                  </button>
+                )}
+              </div>
             </div>
           ))
         )}
-      </div>
+      </section>
 
       {user.role === "ADMIN" && (
-        <div style={{ marginBottom: "30px" }}>
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: "20px",
-              borderRadius: "8px",
-              marginBottom: "20px",
-            }}
-          >
-            <h2>All Users</h2>
-            <p>Total users loaded: {users.length}</p>
+        <section className="section-card">
+          <h2 className="section-title">Admin Overview</h2>
 
-            {users.length === 0 ? (
-              <p>No users found.</p>
-            ) : (
-              users.map((u) => (
-                <div
-                  key={u.id}
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "10px",
-                    marginBottom: "10px",
-                    borderRadius: "6px",
-                  }}
-                >
-                  <strong>{u.name}</strong>
-                  <p>{u.email}</p>
-                  <p>Role: {u.role}</p>
-                </div>
-              ))
-            )}
+          <div className="admin-grid">
+            <div>
+              <h3 className="subsection-title">All Users</h3>
+              <p className="item-meta">Total users: {users.length}</p>
+
+              {users.length === 0 ? (
+                <p className="empty-text">No users found.</p>
+              ) : (
+                users.map((u) => (
+                  <div className="item-card compact-card" key={u.id}>
+                    <h4>{u.name}</h4>
+                    <p>{u.email}</p>
+                    <span className="role-badge">{u.role}</span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div>
+              <h3 className="subsection-title">All Enrollments</h3>
+              <p className="item-meta">Total enrollments: {enrollments.length}</p>
+
+              {enrollments.length === 0 ? (
+                <p className="empty-text">No enrollments found.</p>
+              ) : (
+                enrollments.map((enrollment, index) => (
+                  <div className="item-card compact-card" key={index}>
+                    <h4>{enrollment.user.name}</h4>
+                    <p>{enrollment.user.email}</p>
+                    <p>
+                      {enrollment.course.title} ({enrollment.course.code})
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: "20px",
-              borderRadius: "8px",
-            }}
-          >
-            <h2>All Enrollments</h2>
-            <p>Total enrollments loaded: {enrollments.length}</p>
-
-            {enrollments.length === 0 ? (
-              <p>No enrollments found.</p>
-            ) : (
-              enrollments.map((enrollment, index) => (
-                <div
-                  key={index}
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "10px",
-                    marginBottom: "10px",
-                    borderRadius: "6px",
-                  }}
-                >
-                  <strong>{enrollment.user.name}</strong>
-                  <p>{enrollment.user.email}</p>
-                  <p>
-                    Enrolled in: {enrollment.course.title} (
-                    {enrollment.course.code})
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        </section>
       )}
 
       {selectedCourseId && (
-        <div style={{ marginTop: "40px" }}>
-          <h2>Course Details</h2>
+        <section className="section-card">
+          <h2 className="section-title">Course Details</h2>
 
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: "20px",
-              borderRadius: "8px",
-              marginBottom: "20px",
-            }}
-          >
-            <h3>Announcements</h3>
+          <div className="details-grid">
+            <div>
+              <h3 className="subsection-title">Announcements</h3>
 
-            {announcements.length === 0 ? (
-              <p>No announcements found for this course.</p>
-            ) : (
-              announcements.map((announcement) => (
-                <div
-                  key={announcement.id}
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "10px",
-                    marginBottom: "10px",
-                    borderRadius: "6px",
-                  }}
-                >
-                  <strong>{announcement.title}</strong>
-                  <p>{announcement.content}</p>
+              {announcements.length === 0 ? (
+                <p className="empty-text">No announcements found.</p>
+              ) : (
+                announcements.map((announcement) => (
+                  <div className="item-card" key={announcement.id}>
+                    <h4 className="item-title">{announcement.title}</h4>
+                    <p className="item-text">{announcement.content}</p>
 
-                  {user.role === "LECTURER" && (
-                    <div style={{ marginTop: "10px" }}>
-                      <button
-                        onClick={() => handleEditAnnouncement(announcement)}
-                      >
-                        Edit Announcement
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleDeleteAnnouncement(announcement.id)
-                        }
-                        style={{ marginLeft: "10px" }}
-                      >
-                        Delete Announcement
-                      </button>
-                    </div>
-                  )}
+                    {user.role === "LECTURER" && (
+                      <div className="action-row">
+                        <button
+                          onClick={() =>
+                            handleEditAnnouncement(announcement)
+                          }
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="danger-button"
+                          onClick={() =>
+                            handleDeleteAnnouncement(announcement.id)
+                          }
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+
+              {user.role === "LECTURER" && (
+                <div className="form-panel">
+                  <h4>Create Announcement</h4>
+
+                  <div className="form-group">
+                    <input
+                      placeholder="Announcement title"
+                      value={announcementTitle}
+                      onChange={(e) => setAnnouncementTitle(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <input
+                      placeholder="Announcement content"
+                      value={announcementContent}
+                      onChange={(e) => setAnnouncementContent(e.target.value)}
+                    />
+                  </div>
+
+                  <button onClick={handleCreateAnnouncement}>
+                    Post Announcement
+                  </button>
                 </div>
-              ))
-            )}
+              )}
+            </div>
 
-            {user.role === "LECTURER" && (
-              <div style={{ marginTop: "15px" }}>
-                <h4>Create Announcement</h4>
-                <input
-                  placeholder="Announcement Title"
-                  value={announcementTitle}
-                  onChange={(e) => setAnnouncementTitle(e.target.value)}
-                  style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-                />
-                <input
-                  placeholder="Announcement Content"
-                  value={announcementContent}
-                  onChange={(e) => setAnnouncementContent(e.target.value)}
-                  style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-                />
-                <button onClick={handleCreateAnnouncement}>
-                  Post Announcement
-                </button>
-              </div>
-            )}
-          </div>
+            <div>
+              <h3 className="subsection-title">Materials</h3>
 
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: "20px",
-              borderRadius: "8px",
-            }}
-          >
-            <h3>Materials</h3>
+              {materials.length === 0 ? (
+                <p className="empty-text">No materials found.</p>
+              ) : (
+                materials.map((material) => (
+                  <div className="item-card" key={material.id}>
+                    <h4 className="item-title">{material.title}</h4>
+                    <p className="item-text">
+                      <a href={material.url} target="_blank" rel="noreferrer">
+                        {material.url}
+                      </a>
+                    </p>
 
-            {materials.length === 0 ? (
-              <p>No materials found for this course.</p>
-            ) : (
-              materials.map((material) => (
-                <div
-                  key={material.id}
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "10px",
-                    marginBottom: "10px",
-                    borderRadius: "6px",
-                  }}
-                >
-                  <strong>{material.title}</strong>
-                  <p>
-                    <a href={material.url} target="_blank" rel="noreferrer">
-                      {material.url}
-                    </a>
-                  </p>
+                    {user.role === "LECTURER" && (
+                      <div className="action-row">
+                        <button onClick={() => handleEditMaterial(material)}>
+                          Edit
+                        </button>
+                        <button
+                          className="danger-button"
+                          onClick={() => handleDeleteMaterial(material.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
 
-                  {user.role === "LECTURER" && (
-                    <div style={{ marginTop: "10px" }}>
-                      <button onClick={() => handleEditMaterial(material)}>
-                        Edit Material
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMaterial(material.id)}
-                        style={{ marginLeft: "10px" }}
-                      >
-                        Delete Material
-                      </button>
-                    </div>
-                  )}
+              {user.role === "LECTURER" && (
+                <div className="form-panel">
+                  <h4>Add Material</h4>
+
+                  <div className="form-group">
+                    <input
+                      placeholder="Material title"
+                      value={materialTitle}
+                      onChange={(e) => setMaterialTitle(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <input
+                      placeholder="Material URL"
+                      value={materialUrl}
+                      onChange={(e) => setMaterialUrl(e.target.value)}
+                    />
+                  </div>
+
+                  <button onClick={handleAddMaterial}>Add Material</button>
                 </div>
-              ))
-            )}
-
-            {user.role === "LECTURER" && (
-              <div style={{ marginTop: "15px" }}>
-                <h4>Add Material</h4>
-                <input
-                  placeholder="Material Title"
-                  value={materialTitle}
-                  onChange={(e) => setMaterialTitle(e.target.value)}
-                  style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-                />
-                <input
-                  placeholder="Material URL"
-                  value={materialUrl}
-                  onChange={(e) => setMaterialUrl(e.target.value)}
-                  style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-                />
-                <button onClick={handleAddMaterial}>Add Material</button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

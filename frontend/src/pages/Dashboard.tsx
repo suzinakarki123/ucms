@@ -5,6 +5,7 @@ import type {
   Announcement,
   Material,
   Circular,
+  BlockchainLog
 } from "../types";
 
 import {
@@ -37,6 +38,7 @@ import {
 } from "../api/circularApi";
 
 import { getAllUsers, getAllEnrollments } from "../api/adminApi";
+import { getBlockchainLogs } from "../api/blockchainApi";
 import "../styles/dashboard.css";
 
 interface Props {
@@ -91,17 +93,20 @@ const Dashboard = ({ user, onLogout }: Props) => {
   const [circularTitle, setCircularTitle] = useState("");
   const [circularContent, setCircularContent] = useState("");
 
+  const [blockchainLogs, setBlockchainLogs] = useState<BlockchainLog[]>([]);
+
   useEffect(() => {
     loadInitialData();
   }, [user]);
 
   const loadInitialData = async () => {
-    await Promise.all([
-      loadCourses(),
-      loadCirculars(),
-      user.role === "ADMIN" ? loadAdminData() : Promise.resolve(),
-    ]);
-  };
+  await Promise.all([
+    loadCourses(),
+    loadCirculars(),
+    user.role === "ADMIN" ? loadAdminData() : Promise.resolve(),
+    user.role === "ADMIN" ? loadBlockchainLogs() : Promise.resolve(),
+  ]);
+};
 
   const loadCourses = async () => {
     try {
@@ -156,6 +161,16 @@ const Dashboard = ({ user, onLogout }: Props) => {
       setMaterials([]);
     }
   };
+
+  const loadBlockchainLogs = async () => {
+  try {
+    const data = await getBlockchainLogs(token);
+    setBlockchainLogs(Array.isArray(data) ? data : []);
+  } catch (error) {
+    console.error("Error loading blockchain logs:", error);
+    setBlockchainLogs([]);
+  }
+};
 
   const handleCreateCourse = async () => {
     if (!courseTitle || !courseCode || !courseDescription) return;
@@ -346,7 +361,7 @@ const Dashboard = ({ user, onLogout }: Props) => {
 
       <section className="section-card">
         <h2 className="section-title">University Circulars</h2>
-
+      <div className="scroll-section">
         {circulars.length === 0 ? (
           <p className="empty-text">No circulars available.</p>
         ) : (
@@ -371,6 +386,7 @@ const Dashboard = ({ user, onLogout }: Props) => {
             </div>
           ))
         )}
+        </div>
 
         {user.role === "ADMIN" && (
           <div className="form-panel">
@@ -431,10 +447,11 @@ const Dashboard = ({ user, onLogout }: Props) => {
 
       <section className="section-card">
         <h2 className="section-title">Courses</h2>
-
+      <div className="scroll-section">
         {courses.length === 0 ? (
           <p className="empty-text">No courses available.</p>
         ) : (
+          
           courses.map((course) => (
             <div className="item-card" key={course.id}>
               <h3 className="item-title">{course.title}</h3>
@@ -471,6 +488,7 @@ const Dashboard = ({ user, onLogout }: Props) => {
             </div>
           ))
         )}
+        </div>
       </section>
 
       {user.role === "ADMIN" && (
@@ -517,6 +535,53 @@ const Dashboard = ({ user, onLogout }: Props) => {
         </section>
       )}
 
+      <div className="blockchain-panel">
+  <h3 className="subsection-title">Blockchain Audit Logs</h3>
+  <p className="item-meta">Total logs: {blockchainLogs.length}</p>
+<div className="scroll-section">
+  {blockchainLogs.length === 0 ? (
+    <p className="empty-text">No blockchain logs found.</p>
+  ) : (
+    blockchainLogs.map((log) => (
+      <div className="item-card compact-card" key={log.id}>
+        <h4>{log.action}</h4>
+        <p>
+          <strong>Entity:</strong> {log.entityType} #{log.entityId}
+        </p>
+        <p>
+          <strong>User ID:</strong> {log.userId ?? "N/A"}
+        </p>
+        <p>
+          <strong>Status:</strong>{" "}
+          <span
+            className={
+              log.status === "CONFIRMED"
+                ? "status-confirmed"
+                : log.status === "FAILED"
+                ? "status-failed"
+                : "status-pending"
+            }
+          >
+            {log.status}
+          </span>
+        </p>
+
+        {log.blockchainTxId ? (
+          <p className="tx-text">
+            <strong>Tx ID:</strong> {log.blockchainTxId}
+          </p>
+        ) : (
+          <p className="empty-text">No transaction ID</p>
+        )}
+
+        <p className="item-meta">
+          {new Date(log.createdAt).toLocaleString()}
+        </p>
+      </div>
+    ))
+  )} </div>
+</div>
+
       {selectedCourseId && (
         <section className="section-card">
           <h2 className="section-title">Course Details</h2>
@@ -524,7 +589,7 @@ const Dashboard = ({ user, onLogout }: Props) => {
           <div className="details-grid">
             <div>
               <h3 className="subsection-title">Announcements</h3>
-
+              <div className="scroll-section">
               {announcements.length === 0 ? (
                 <p className="empty-text">No announcements found.</p>
               ) : (
@@ -555,6 +620,7 @@ const Dashboard = ({ user, onLogout }: Props) => {
                   </div>
                 ))
               )}
+              </div>
 
               {user.role === "LECTURER" && (
                 <div className="form-panel">
@@ -585,7 +651,7 @@ const Dashboard = ({ user, onLogout }: Props) => {
 
             <div>
               <h3 className="subsection-title">Materials</h3>
-
+            <div className="scroll-section">
               {materials.length === 0 ? (
                 <p className="empty-text">No materials found.</p>
               ) : (
@@ -614,6 +680,7 @@ const Dashboard = ({ user, onLogout }: Props) => {
                   </div>
                 ))
               )}
+              </div>
 
               {user.role === "LECTURER" && (
                 <div className="form-panel">

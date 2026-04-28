@@ -143,3 +143,52 @@
     grid-template-columns: 1fr;
   }
 }
+
+.blockchain-panel {
+  margin-top: 24px;
+}
+
+.status-confirmed {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.status-failed {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.status-pending {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.tx-text {
+  word-break: break-all;
+  font-size: 13px;
+  color: #374151;
+}
+
+.scroll-section {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.scroll-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-section::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.scroll-section::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 10px;
+}
+
+.scroll-section::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}

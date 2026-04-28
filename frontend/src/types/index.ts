@@ -43,3 +43,14 @@ export interface Circular {
   content: string;
   createdAt?: string;
 }
+
+export interface BlockchainLog {
+  id: number;
+  action: string;
+  entityType: string;
+  entityId: number;
+  userId?: number;
+  blockchainTxId?: string | null;
+  status: "PENDING" | "CONFIRMED" | "FAILED";
+  createdAt: string;
+}

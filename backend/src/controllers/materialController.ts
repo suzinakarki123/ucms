@@ -1,6 +1,7 @@
 import { Response } from "express";
 import prisma from "../utils/prisma";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { createBlockchainLog } from "../utils/blockchainLogger";
 
 export const addMaterial = async (
   req: AuthRequest,
@@ -40,6 +41,12 @@ export const addMaterial = async (
         courseId: Number(courseId),
       },
     });
+    await createBlockchainLog({
+  action: "MATERIAL_ADDED",
+  entityType: "Material",
+  entityId: material.id,
+  userId: req.user.id,
+});
 
     res.status(201).json({
       message: "Material added successfully",

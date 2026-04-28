@@ -1,6 +1,7 @@
 import { Response } from "express";
 import prisma from "../utils/prisma";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { createBlockchainLog } from "../utils/blockchainLogger";
 
 export const createCircular = async (
   req: AuthRequest,
@@ -20,6 +21,13 @@ export const createCircular = async (
         content,
       },
     });
+
+    await createBlockchainLog({
+  action: "CIRCULAR_CREATED",
+  entityType: "Circular",
+  entityId: circular.id,
+  userId: req.user?.id,
+});
 
     res.status(201).json({
       message: "Circular created successfully",

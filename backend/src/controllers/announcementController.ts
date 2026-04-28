@@ -1,6 +1,7 @@
 import { Response } from "express";
 import prisma from "../utils/prisma";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { createBlockchainLog } from "../utils/blockchainLogger";
 
 export const createAnnouncement = async (
   req: AuthRequest,
@@ -41,6 +42,12 @@ export const createAnnouncement = async (
         authorId: req.user.id,
       },
     });
+    await createBlockchainLog({
+  action: "ANNOUNCEMENT_CREATED",
+  entityType: "Announcement",
+  entityId: announcement.id,
+  userId: req.user.id,
+});
 
     res.status(201).json({
       message: "Announcement created successfully",

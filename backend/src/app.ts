@@ -7,6 +7,7 @@ import adminRoutes from "./routes/adminRoutes";
 import courseRoutes from "./routes/courseRoutes";
 import announcementRoutes from "./routes/announcementRoutes";
 import materialRoutes from "./routes/materialRoutes";
+import blockchainLogRoutes from "./routes/blockchainLogRoutes";
 
 console.log("authRoutes =", authRoutes);
 console.log("testRoutes =", testRoutes);
@@ -31,5 +32,6 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/circulars", circularRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/materials", materialRoutes);
+app.use("/api/blockchain-logs", blockchainLogRoutes);
 
 export default app;

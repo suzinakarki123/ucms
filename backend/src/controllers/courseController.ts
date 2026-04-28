@@ -1,6 +1,7 @@
 import { Response } from "express";
 import prisma from "../utils/prisma";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { createBlockchainLog } from "../utils/blockchainLogger";
 
 export const createCourse = async (
   req: AuthRequest,
@@ -36,6 +37,13 @@ export const createCourse = async (
         lecturerId: req.user.id,
       },
     });
+
+    await createBlockchainLog({
+  action: "COURSE_CREATED",
+  entityType: "Course",
+  entityId: course.id,
+  userId: req.user.id,
+});
 
     res.status(201).json({
       message: "Course created successfully",

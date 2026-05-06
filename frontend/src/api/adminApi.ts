@@ -21,3 +21,21 @@ export const getAllEnrollments = async (token: string) => {
 
   return res.data;
 };
+
+export const createUserByAdmin = async (
+  token: string,
+  data: {
+    name: string;
+    email: string;
+    password: string;
+    role: "ADMIN" | "LECTURER" | "STUDENT";
+  }
+) => {
+  const res = await axios.post(`${API_URL}/users/create`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};

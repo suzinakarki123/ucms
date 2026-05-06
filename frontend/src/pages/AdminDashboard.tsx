@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import type { User, Circular, BlockchainLog } from "../types";
+
 import {
   getCirculars,
   createCircular,
   deleteCircular,
   updateCircular,
 } from "../api/circularApi";
-import { getAllUsers, getAllEnrollments } from "../api/adminApi";
+
+import {
+  getAllUsers,
+  getAllEnrollments,
+  createUserByAdmin,
+} from "../api/adminApi";
+
 import { getBlockchainLogs } from "../api/blockchainApi";
 import "../styles/dashboard.css";
 
@@ -47,6 +54,13 @@ const AdminDashboard = ({ user, onLogout }: Props) => {
   const [circularTitle, setCircularTitle] = useState("");
   const [circularContent, setCircularContent] = useState("");
 
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<
+    "ADMIN" | "LECTURER" | "STUDENT"
+  >("STUDENT");
+
   useEffect(() => {
     loadAdminDashboard();
   }, []);
@@ -61,37 +75,62 @@ const AdminDashboard = ({ user, onLogout }: Props) => {
   };
 
   const loadCirculars = async () => {
-    const data = await getCirculars(token);
-    setCirculars(Array.isArray(data) ? data : []);
+    try {
+      const data = await getCirculars(token);
+      setCirculars(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error loading circulars:", error);
+      setCirculars([]);
+    }
   };
 
   const loadUsers = async () => {
-    const data = await getAllUsers(token);
-    setUsers(Array.isArray(data) ? data : []);
+    try {
+      const data = await getAllUsers(token);
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error loading users:", error);
+      setUsers([]);
+    }
   };
 
   const loadEnrollments = async () => {
-    const data = await getAllEnrollments(token);
-    setEnrollments(Array.isArray(data) ? data : []);
+    try {
+      const data = await getAllEnrollments(token);
+      setEnrollments(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error loading enrollments:", error);
+      setEnrollments([]);
+    }
   };
 
   const loadBlockchainLogs = async () => {
-    const data = await getBlockchainLogs(token);
-    setBlockchainLogs(Array.isArray(data) ? data : []);
+    try {
+      const data = await getBlockchainLogs(token);
+      setBlockchainLogs(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error loading blockchain logs:", error);
+      setBlockchainLogs([]);
+    }
   };
 
   const handleCreateCircular = async () => {
     if (!circularTitle || !circularContent) return;
 
-    await createCircular(token, {
-      title: circularTitle,
-      content: circularContent,
-    });
+    try {
+      await createCircular(token, {
+        title: circularTitle,
+        content: circularContent,
+      });
 
-    setCircularTitle("");
-    setCircularContent("");
-    await loadCirculars();
-    await loadBlockchainLogs();
+      setCircularTitle("");
+      setCircularContent("");
+      await loadCirculars();
+      await loadBlockchainLogs();
+    } catch (error) {
+      console.error("Error creating circular:", error);
+      alert("Failed to create circular");
+    }
   };
 
   const handleEditCircular = async (circular: Circular) => {
@@ -101,13 +140,49 @@ const AdminDashboard = ({ user, onLogout }: Props) => {
     const content = prompt("Enter new circular content:", circular.content);
     if (content === null) return;
 
-    await updateCircular(token, circular.id, { title, content });
-    await loadCirculars();
+    try {
+      await updateCircular(token, circular.id, { title, content });
+      await loadCirculars();
+    } catch (error) {
+      console.error("Error updating circular:", error);
+      alert("Failed to update circular");
+    }
   };
 
   const handleDeleteCircular = async (id: number) => {
-    await deleteCircular(token, id);
-    await loadCirculars();
+    try {
+      await deleteCircular(token, id);
+      await loadCirculars();
+    } catch (error) {
+      console.error("Error deleting circular:", error);
+      alert("Failed to delete circular");
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUserName || !newUserEmail || !newUserPassword || !newUserRole) {
+      alert("Please fill in all user fields");
+      return;
+    }
+
+    try {
+      await createUserByAdmin(token, {
+        name: newUserName,
+        email: newUserEmail,
+        password: newUserPassword,
+        role: newUserRole,
+      });
+
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserRole("STUDENT");
+
+      await loadUsers();
+    } catch (error) {
+      console.error("Error creating user:", error);
+      alert("Failed to create user. Email may already exist.");
+    }
   };
 
   return (
@@ -175,6 +250,56 @@ const AdminDashboard = ({ user, onLogout }: Props) => {
                   </div>
                 ))
               )}
+            </div>
+          </section>
+
+          <section className="section-card">
+            <h2 className="section-title">Add New User</h2>
+
+            <div className="form-panel">
+              <div className="form-group">
+                <input
+                  placeholder="Full name"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <input
+                  placeholder="Email address"
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <input
+                  placeholder="Temporary password"
+                  type="password"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <select
+                  className="form-select"
+                  value={newUserRole}
+                  onChange={(e) =>
+                    setNewUserRole(
+                      e.target.value as "ADMIN" | "LECTURER" | "STUDENT"
+                    )
+                  }
+                >
+                  <option value="STUDENT">Student</option>
+                  <option value="LECTURER">Lecturer</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+
+              <button onClick={handleCreateUser}>Create User</button>
             </div>
           </section>
         </div>
@@ -254,12 +379,15 @@ const AdminDashboard = ({ user, onLogout }: Props) => {
                 blockchainLogs.map((log) => (
                   <div className="item-card compact-card" key={log.id}>
                     <h4>{log.action}</h4>
+
                     <p>
                       <strong>Entity:</strong> {log.entityType} #{log.entityId}
                     </p>
+
                     <p>
                       <strong>User:</strong> {log.userId ?? "N/A"}
                     </p>
+
                     <p>
                       <strong>Status:</strong>{" "}
                       <span

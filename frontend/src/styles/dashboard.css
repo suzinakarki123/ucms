@@ -266,3 +266,40 @@
     width: 100%;
   }
 }
+.student-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+/* .lecturer-layout {
+  grid-template-columns: minmax(0, 1.1fr) minmax(420px, 0.9fr);
+} */
+
+@media (max-width: 1100px) {
+  .lecturer-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.single-dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.single-dashboard-layout .section-card {
+  width: 100%;
+}
+
+.single-dashboard-layout .details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .single-dashboard-layout .details-grid {
+    grid-template-columns: 1fr;
+  }
+}

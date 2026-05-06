@@ -2,6 +2,7 @@ import express from "express";
 import {
   getAllUsers,
   getAllEnrollments,
+  createUserByAdmin,
 } from "../controllers/adminController";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { authorizeRoles } from "../middleware/roleMiddleware";
@@ -20,6 +21,12 @@ router.get(
   authenticateToken,
   authorizeRoles("ADMIN"),
   getAllEnrollments
+);
+router.post(
+  "/users/create",
+  authenticateToken,
+  authorizeRoles("ADMIN"),
+  createUserByAdmin
 );
 
 export default router;

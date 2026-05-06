@@ -1,6 +1,7 @@
 import { Response } from "express";
 import bcrypt from "bcrypt";
 import prisma from "../utils/prisma";
+import { createBlockchainLog } from "../utils/blockchainLogger";
 import { AuthRequest } from "../middleware/authMiddleware";
 
 export const getAllUsers = async (
@@ -108,6 +109,12 @@ export const createUserByAdmin = async (
         createdAt: true,
       },
     });
+    await createBlockchainLog({
+  action: "USER_CREATED_BY_ADMIN",
+  entityType: "User",
+  entityId: user.id,
+  userId: req.user?.id,
+});
 
     res.status(201).json({
       message: "User created successfully",
